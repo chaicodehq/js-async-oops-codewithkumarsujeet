@@ -73,33 +73,120 @@
  *   service.markDelivered(1);       // => true
  *   service.getDailyReport();
  *   // => { totalCustomers: 2, delivered: 1, pending: 1, mealBreakdown: { veg: 1, nonveg: 0, jain: 1 } }
+ *
+ *
  */
 export class DabbaService {
   constructor(serviceName, area) {
-    // Your code here
+    this.serviceName = serviceName;
+    this.area = area;
+    this.customers = [];
+    this._nextId = 1;
   }
 
   addCustomer(name, address, mealPreference) {
-    // Your code here
+    const meal = ["veg", "nonveg", "jain"];
+    if (!meal.includes(mealPreference)) {
+      return null;
+    }
+    const isCustomerExist = this.customers.some(
+      (customer) => customer.name === name,
+    );
+    if (isCustomerExist) {
+      return null;
+    }
+    let id = this._nextId;
+    this._nextId++;
+    const customer = {
+      id,
+      name,
+      address,
+      mealPreference,
+      active: true,
+      delivered: false,
+    };
+    this.customers.push(customer);
+    return customer;
   }
 
   removeCustomer(name) {
-    // Your code here
+    const customer = this.customers.find((customer) => customer.name === name);
+
+    if (!customer || customer.active === false) {
+      return false;
+    }
+    customer.active = false;
+    return true;
   }
 
   createDeliveryBatch() {
-    // Your code here
+    const activeCustomers = this.customers.filter(
+      (customer) => customer.active === true,
+    );
+    if (activeCustomers.length === 0) {
+      return [];
+    }
+    return activeCustomers.map((customer) => {
+      customer.delivered = false;
+
+      return {
+        customerId: customer.id,
+        name: customer.name,
+        address: customer.address,
+        mealPreference: customer.mealPreference,
+        batchTime: new Date().toISOString(),
+      };
+    });
   }
 
   markDelivered(customerId) {
-    // Your code here
+    const actvieCustomer = this.customers.find(
+      (customer) => customer.id === customerId,
+    );
+    if (!actvieCustomer || actvieCustomer.active === false) {
+      return false;
+    }
+    actvieCustomer.delivered = true;
+    return true;
   }
 
   getDailyReport() {
-    // Your code here
+    const totalCustomers = this.customers.filter(
+      (customer) => customer.active === true,
+    ).length;
+
+    const delivered = this.customers.filter(
+      (customer) => customer.active === true && customer.delivered === true,
+    ).length;
+
+    const pending = this.customers.filter(
+      (customer) => customer.active === true && customer.delivered === false,
+    ).length;
+
+    const mealBreakdown = this.customers
+      .filter((customer) => customer.active === true)
+      .reduce(
+        (acc, { mealPreference }) => {
+          acc[mealPreference] = (acc[mealPreference] || 0) + 1;
+
+          return acc;
+        },
+        { veg: 0, nonveg: 0, jain: 0 },
+      );
+
+    return {
+      totalCustomers,
+      delivered,
+      pending,
+      mealBreakdown,
+    };
   }
 
   getCustomer(name) {
-    // Your code here
+    const customer = this.customers.find((customer) => customer.name === name);
+    if (!customer) {
+      return null;
+    }
+    return customer;
   }
 }
